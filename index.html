@@ -54,7 +54,9 @@
             aspect-ratio: 1 / 2;
         }
 
-        /* 레벨업 폭죽 애니메이션 */
+        /* --- 추가/수정된 레벨업 애니메이션 --- */
+
+        /* 공통 폭죽(파티클) */
         @keyframes floatParticle {
             0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
             100% { transform: translateY(-140px) scale(0.3) rotate(360deg); opacity: 0; }
@@ -65,6 +67,83 @@
             height: 8px;
             border-radius: 2px;
             animation: floatParticle 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        /* 1. 사람 캐릭터 만세 점프 축하 애니메이션 */
+        @keyframes cheerJump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-16px) scale(1.08); }
+        }
+        @keyframes armRaiseL {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(-75deg); }
+        }
+        @keyframes armRaiseR {
+            0%, 100% { transform: rotate(15deg); }
+            50% { transform: rotate(75deg); }
+        }
+        .cheering-person {
+            animation: cheerJump 0.35s infinite ease-in-out;
+        }
+        .cheering-person:nth-child(1) { animation-delay: 0s; }
+        .cheering-person:nth-child(2) { animation-delay: 0.12s; }
+        .cheering-person:nth-child(3) { animation-delay: 0.24s; }
+
+        .arm-left {
+            transform-origin: 14px 22px;
+            animation: armRaiseL 0.35s infinite ease-in-out;
+        }
+        .arm-right {
+            transform-origin: 26px 22px;
+            animation: armRaiseR 0.35s infinite ease-in-out;
+        }
+
+        /* 2. 별(Star) 폭발 애니메이션 */
+        @keyframes starExplode {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+            100% { transform: scale(1) rotate(360deg); opacity: 0; }
+        }
+        .star-burst {
+            position: absolute;
+            animation: starExplode 1.5s ease-out forwards;
+        }
+
+        /* 3. 로켓(Rocket) 발사 애니메이션 */
+        @keyframes rocketLaunch {
+            0% { transform: translateY(100px) scale(0.5); opacity: 0; }
+            20% { transform: translateY(20px) scale(1); opacity: 1; }
+            80% { transform: translateY(-20px) scale(1); opacity: 1; }
+            100% { transform: translateY(-150px) scale(0.5); opacity: 0; }
+        }
+        @keyframes fireFlicker {
+            0%, 100% { transform: scaleY(1); opacity: 0.8; }
+            50% { transform: scaleY(1.3); opacity: 1; fill: #fbbf24; }
+        }
+        .rocket-ship {
+            animation: rocketLaunch 1.8s ease-in forwards;
+        }
+        .rocket-fire {
+            transform-origin: top;
+            animation: fireFlicker 0.1s infinite;
+        }
+
+        /* 4. 대형 왕관(Crown) 드롭 애니메이션 */
+        @keyframes crownDrop {
+            0% { transform: translateY(-80px) scale(2) rotate(10deg); opacity: 0; }
+            40% { transform: translateY(0) scale(1) rotate(-5deg); opacity: 1; }
+            60% { transform: translateY(-10px) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1.1); opacity: 1; }
+        }
+        @keyframes gemShine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 5px white); }
+        }
+        .crown-item {
+            animation: crownDrop 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .crown-gem {
+            animation: gemShine 0.5s infinite;
         }
 
         /* 음표 일렁이는 애니메이션 */
@@ -129,6 +208,19 @@
         </div>
     </header>
 
+    <!-- 방문자 수 카운터 현황판 -->
+    <div class="w-full max-w-sm md:max-w-md mx-auto my-0.5 flex items-center justify-between px-3 py-1 bg-gray-900/60 backdrop-blur-md border border-gray-800/80 rounded-xl text-[10px] md:text-xs text-gray-300 shrink-0">
+        <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-users text-cyan-400"></i>
+            <span class="font-semibold text-gray-400">VISITORS</span>
+        </div>
+        <div class="flex items-center gap-3 font-retro">
+            <span>TODAY <strong id="today-visits" class="text-cyan-400 font-bold">--</strong></span>
+            <span class="text-gray-600">|</span>
+            <span>TOTAL <strong id="total-visits" class="text-yellow-400 font-bold">--</strong></span>
+        </div>
+    </div>
+
     <!-- 게임 대시보드 (점수, 레벨, 라인, 다음 블록) -->
     <section class="w-full max-w-sm md:max-w-md mx-auto my-1 grid grid-cols-4 gap-1.5 text-center shrink-0">
         <!-- SCORE -->
@@ -166,69 +258,18 @@
             <!-- 레벨 업 축하 연출 오버레이 -->
             <div id="level-up-overlay" class="absolute inset-0 bg-indigo-950/85 backdrop-blur-md flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-300 z-20 hidden pointer-events-none overflow-hidden">
                 <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
-                <div class="animate-bounce mb-0.5">
-                    <i class="fa-solid fa-trophy text-3xl md:text-4xl text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.9)]"></i>
-                </div>
-                <h3 class="text-2xl md:text-3xl font-black font-retro tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse">
+                
+                <h3 class="text-2xl md:text-3xl font-black font-retro tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse mt-4">
                     LEVEL UP!
                 </h3>
-                <p id="level-up-text" class="text-base md:text-lg font-bold font-retro text-cyan-300 mt-0.5">LEVEL 2</p>
+                <p id="level-up-text" class="text-base md:text-lg font-bold font-retro text-cyan-300 mt-0.5 mb-2">LEVEL 2</p>
 
-                <!-- 사람 형태의 캐릭터 만세(Hurrah!) 축하 애니메이션 영역 -->
-                <div class="flex items-end justify-center gap-2 my-2 z-10">
-                    <!-- 캐릭터 1 (핑크) -->
-                    <div class="cheering-person">
-                        <svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" viewBox="0 0 40 60">
-                            <!-- 파티 모자 & 머리 -->
-                            <polygon points="20,0 14,8 26,8" fill="#ff0055"/>
-                            <circle cx="20" cy="13" r="7" fill="#ffdbac"/>
-                            <circle cx="18" cy="12" r="1" fill="#1e293b"/>
-                            <circle cx="22" cy="12" r="1" fill="#1e293b"/>
-                            <path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/>
-                            <!-- 의상 & 바지 -->
-                            <rect x="14" y="21" width="12" height="17" rx="3" fill="#ec4899"/>
-                            <rect x="15" y="38" width="4" height="16" rx="1" fill="#3b82f6"/>
-                            <rect x="21" y="38" width="4" height="16" rx="1" fill="#3b82f6"/>
-                            <!-- 만세 동작 팔 L / R -->
-                            <g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(-30 14 22)"/></g>
-                            <g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(30 26 22)"/></g>
-                        </svg>
-                    </div>
-
-                    <!-- 캐릭터 2 (민트/시안) -->
-                    <div class="cheering-person">
-                        <svg class="w-9 h-13 md:w-11 md:h-15 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" viewBox="0 0 40 60">
-                            <polygon points="20,0 14,8 26,8" fill="#facc15"/>
-                            <circle cx="20" cy="13" r="7" fill="#f1c27d"/>
-                            <circle cx="18" cy="12" r="1" fill="#1e293b"/>
-                            <circle cx="22" cy="12" r="1" fill="#1e293b"/>
-                            <path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/>
-                            <rect x="14" y="21" width="12" height="17" rx="3" fill="#06b6d4"/>
-                            <rect x="15" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/>
-                            <rect x="21" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/>
-                            <g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(-30 14 22)"/></g>
-                            <g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(30 26 22)"/></g>
-                        </svg>
-                    </div>
-
-                    <!-- 캐릭터 3 (퍼플) -->
-                    <div class="cheering-person">
-                        <svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]" viewBox="0 0 40 60">
-                            <polygon points="20,0 14,8 26,8" fill="#22c55e"/>
-                            <circle cx="20" cy="13" r="7" fill="#ffd1a4"/>
-                            <circle cx="18" cy="12" r="1" fill="#1e293b"/>
-                            <circle cx="22" cy="12" r="1" fill="#1e293b"/>
-                            <path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/>
-                            <rect x="14" y="21" width="12" height="17" rx="3" fill="#a855f7"/>
-                            <rect x="15" y="38" width="4" height="16" rx="1" fill="#475569"/>
-                            <rect x="21" y="38" width="4" height="16" rx="1" fill="#475569"/>
-                            <g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(-30 14 22)"/></g>
-                            <g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(30 26 22)"/></g>
-                        </svg>
-                    </div>
+                <!-- 동적 애니메이션 컨테이너 (JS에서 교체됨) -->
+                <div id="animation-container" class="relative w-32 h-32 flex items-center justify-center my-2 z-10">
+                    <!-- 애니메이션이 여기에 삽입됩니다 -->
                 </div>
 
-                <span class="text-[11px] md:text-xs text-gray-200 bg-pink-500/40 px-3 py-0.5 rounded-full border border-pink-400/60 font-semibold tracking-wider">SPEED UP! ⚡</span>
+                <span class="text-[11px] md:text-xs text-gray-200 bg-pink-500/40 px-3 py-0.5 rounded-full border border-pink-400/60 font-semibold tracking-wider mt-2">SPEED UP! ⚡ & BOARD CLEARED!</span>
             </div>
 
             <!-- 게임 오버레이 -->
@@ -749,9 +790,13 @@
             if (collide(boardState, player)) {
                 player.pos.y--;
                 merge(boardState, player);
-                playerReset();
-                arenaSweep();
-                updateUI();
+                const isLevelUp = arenaSweep();
+                
+                // 레벨업 중이 아닐 때만 블록을 리셋(새로운 블록 생성)
+                if (!isLevelUp) {
+                    playerReset();
+                    updateUI();
+                }
                 soundEffects.drop();
             }
             dropCounter = 0;
@@ -763,15 +808,21 @@
             }
             player.pos.y--;
             merge(boardState, player);
-            playerReset();
-            arenaSweep();
-            updateUI();
+            const isLevelUp = arenaSweep();
+            
+            // 레벨업 중이 아닐 때만 블록을 리셋
+            if (!isLevelUp) {
+                playerReset();
+                updateUI();
+            }
             soundEffects.drop();
             dropCounter = 0;
         }
 
         function arenaSweep() {
             let rowCount = 1;
+            let linesCleared = 0;
+            
             outer: for (let y = boardState.length - 1; y > 0; --y) {
                 for (let x = 0; x < boardState[y].length; ++x) {
                     if (boardState[y][x] === 0) {
@@ -785,60 +836,144 @@
 
                 score += rowCount * 100;
                 rowCount *= 2;
+                linesCleared++;
                 lines++;
-
-                const nextLvl = Math.floor(lines / 10) + 1;
-                if (nextLvl > level) {
-                    level = nextLvl;
-                    triggerLevelUp(level);
-                }
-
-                dropInterval = Math.max(100, 1000 - (level - 1) * 100);
-
+            }
+            
+            if (linesCleared > 0) {
                 soundEffects.clear();
             }
+
+            const nextLvl = Math.floor(lines / 10) + 1;
+            if (nextLvl > level) {
+                level = nextLvl;
+                
+                // 난이도 상승 폭을 더 키움 (기존 100 -> 120 차감)
+                dropInterval = Math.max(80, 1000 - (level - 1) * 120);
+                
+                triggerLevelUp(level);
+                return true; // 레벨업 발생
+            }
+            
+            return false; // 레벨업 없음
         }
 
         function triggerLevelUp(lvl) {
+            isPaused = true; // 연출 중 게임 일시정지 (내부 로직용)
             soundEffects.levelUp();
             
             const lvlOverlay = document.getElementById('level-up-overlay');
             const lvlText = document.getElementById('level-up-text');
             const confettiContainer = document.getElementById('confetti-container');
+            const animationContainer = document.getElementById('animation-container');
             
-            if (!lvlOverlay || !lvlText || !confettiContainer) return;
+            if (!lvlOverlay || !lvlText || !confettiContainer || !animationContainer) return;
 
             lvlText.textContent = `LEVEL ${lvl}`;
             
-            // 축하 파티클(폭죽) 생성
+            // 1. 공통 파티클(폭죽) 생성
             confettiContainer.innerHTML = '';
             const colors = ['#f0f000', '#00f0f0', '#f000f0', '#00f000', '#f0a000', '#a000f0', '#ff0055'];
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 40; i++) {
                 const p = document.createElement('div');
                 p.className = 'confetti-particle';
                 p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                 p.style.left = `${Math.random() * 100}%`;
                 p.style.bottom = `${Math.random() * 30 + 30}%`;
-                p.style.animationDelay = `${Math.random() * 0.3}s`;
+                p.style.animationDelay = `${Math.random() * 0.2}s`;
                 confettiContainer.appendChild(p);
+            }
+
+            // 2. 레벨별 다이나믹 애니메이션 교체 (4가지 패턴 루프)
+            const animType = lvl % 4;
+            animationContainer.innerHTML = ''; // 기존 애니메이션 초기화
+
+            if (animType === 2) {
+                // 패턴 A: 만세 캐릭터 3인방
+                animationContainer.innerHTML = `
+                    <div class="flex items-end justify-center gap-2">
+                        <div class="cheering-person"><svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#ff0055"/><circle cx="20" cy="13" r="7" fill="#ffdbac"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#ec4899"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#3b82f6"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#3b82f6"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(30 26 22)"/></g></svg></div>
+                        <div class="cheering-person"><svg class="w-9 h-13 md:w-11 md:h-15 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#facc15"/><circle cx="20" cy="13" r="7" fill="#f1c27d"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#06b6d4"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(30 26 22)"/></g></svg></div>
+                        <div class="cheering-person"><svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#22c55e"/><circle cx="20" cy="13" r="7" fill="#ffd1a4"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#a855f7"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#475569"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#475569"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(30 26 22)"/></g></svg></div>
+                    </div>
+                `;
+            } else if (animType === 3) {
+                // 패턴 B: 별(Star) 폭발 회전
+                for(let j=0; j<6; j++) {
+                    const angle = (j * 60) * (Math.PI / 180);
+                    const tx = Math.cos(angle) * 50;
+                    const ty = Math.sin(angle) * 50;
+                    animationContainer.innerHTML += `
+                        <div class="star-burst" style="transform-origin: ${-tx}px ${-ty}px; margin-left: ${tx}px; margin-top: ${ty}px; animation-delay: ${j*0.1}s">
+                            <i class="fa-solid fa-star text-yellow-400 text-3xl drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"></i>
+                        </div>
+                    `;
+                }
+            } else if (animType === 0) {
+                // 패턴 C: 로켓 발사
+                animationContainer.innerHTML = `
+                    <div class="rocket-ship">
+                        <svg width="60" height="90" viewBox="0 0 100 150" class="drop-shadow-[0_0_12px_rgba(6,182,212,0.8)]">
+                            <!-- 로켓 본체 -->
+                            <path d="M 50 10 C 20 50 20 100 20 100 L 80 100 C 80 100 80 50 50 10 Z" fill="#e2e8f0" />
+                            <!-- 창문 -->
+                            <circle cx="50" cy="60" r="12" fill="#1e293b" />
+                            <circle cx="50" cy="60" r="9" fill="#38bdf8" />
+                            <!-- 날개 -->
+                            <polygon points="20,80 0,110 20,100" fill="#ef4444" />
+                            <polygon points="80,80 100,110 80,100" fill="#ef4444" />
+                            <!-- 불꽃 -->
+                            <polygon class="rocket-fire" points="30,100 50,140 70,100 60,110 40,110" fill="#f97316" />
+                        </svg>
+                    </div>
+                `;
+            } else {
+                // 패턴 D: 대형 황금 왕관 드롭
+                animationContainer.innerHTML = `
+                    <div class="crown-item">
+                        <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-[0_0_15px_rgba(250,204,21,1)]">
+                            <!-- 왕관 바탕 -->
+                            <path d="M 10 30 L 30 50 L 50 20 L 70 50 L 90 30 L 85 80 L 15 80 Z" fill="#eab308" stroke="#ca8a04" stroke-width="2"/>
+                            <!-- 보석 장식 -->
+                            <circle class="crown-gem" cx="10" cy="30" r="6" fill="#ef4444" />
+                            <circle class="crown-gem" cx="50" cy="20" r="8" fill="#3b82f6" />
+                            <circle class="crown-gem" cx="90" cy="30" r="6" fill="#ef4444" />
+                            <circle class="crown-gem" cx="30" cy="70" r="4" fill="#22c55e" />
+                            <circle class="crown-gem" cx="70" cy="70" r="4" fill="#22c55e" />
+                            <circle class="crown-gem" cx="50" cy="70" r="5" fill="#a855f7" />
+                        </svg>
+                    </div>
+                `;
             }
 
             lvlOverlay.classList.remove('hidden');
 
             setTimeout(() => {
                 lvlOverlay.classList.add('hidden');
-            }, 1800);
+                
+                // 3. 쌓인 블록 초기화 (보드 클리어)
+                boardState = createMatrix(COLS, ROWS);
+                
+                // 4. 새로운 블록 생성 후 게임 재개
+                playerReset();
+                updateUI();
+                isPaused = false;
+                
+            }, 2000); // 연출 시간을 조금 넉넉히 2초로 줌
         }
 
         function update(time = 0) {
-            if (isGameOver || isPaused || !gameStarted) return;
+            // isPaused가 내부적으로 true면 (레벨업 연출 등) 화면 갱신은 하되 낙하는 멈춤
+            if (isGameOver || !gameStarted) return;
 
             const deltaTime = time - lastTime;
             lastTime = time;
 
-            dropCounter += deltaTime;
-            if (dropCounter > dropInterval) {
-                playerDrop();
+            if (!isPaused) {
+                dropCounter += deltaTime;
+                if (dropCounter > dropInterval) {
+                    playerDrop();
+                }
             }
 
             draw();
@@ -1078,9 +1213,42 @@
             }
         });
 
+        // --- 방문자 수 카운터 (Total & Today) ---
+        async function initVisitorCounter() {
+            const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const namespace = 'hochani-tetris-dlghcks7737';
+            
+            // 동일 세션 반복 새로고침 시 카운터 중복 증가 방지
+            const hasVisitedToday = sessionStorage.getItem('visited_' + todayStr);
+            const action = hasVisitedToday ? '' : '/up';
+            
+            try {
+                // 1. 총 방문자 수 조회/증가
+                const totalRes = await fetch(`https://api.counterapi.dev/v1/${namespace}/total${action}`);
+                if (totalRes.ok) {
+                    const totalData = await totalRes.json();
+                    document.getElementById('total-visits').textContent = (totalData.count || 1).toLocaleString();
+                }
+
+                // 2. 오늘 방문자 수 조회/증가
+                const todayRes = await fetch(`https://api.counterapi.dev/v1/${namespace}/today_${todayStr}${action}`);
+                if (todayRes.ok) {
+                    const todayData = await todayRes.json();
+                    document.getElementById('today-visits').textContent = (todayData.count || 1).toLocaleString();
+                }
+
+                sessionStorage.setItem('visited_' + todayStr, 'true');
+            } catch (e) {
+                console.log("Visitor counter status:", e);
+                document.getElementById('today-visits').textContent = '1';
+                document.getElementById('total-visits').textContent = '1';
+            }
+        }
+
         window.onload = function() {
             boardState = createMatrix(COLS, ROWS);
             draw();
+            initVisitorCounter();
         };
     </script>
 </body>
