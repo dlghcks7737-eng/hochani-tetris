@@ -2,312 +2,367 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>HOCHANI TETRIS</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome 아이콘 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap');
         
-        * {
-            box-sizing: border-box;
-            touch-action: manipulation;
+        :root {
+            --app-height: 100vh;
         }
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a14 100%);
-            user-select: none;
-            -webkit-user-select: none;
-            overscroll-behavior: none;
-            height: 100vh;
-            height: calc(var(--vh, 1vh) * 100);
+            background: radial-gradient(circle, #121226 0%, #080811 100%);
+            height: var(--app-height);
+            touch-action: manipulation;
         }
         
         .font-retro {
             font-family: 'Orbitron', sans-serif;
         }
 
-        /* 블록 네온 글로우 스타일 */
-        .block-I { background-color: #00f0f0; box-shadow: 0 0 8px #00f0f0 inset, 0 0 4px #00f0f0; border: 1px solid #ffffff40; }
-        .block-O { background-color: #f0f000; box-shadow: 0 0 8px #f0f000 inset, 0 0 4px #f0f000; border: 1px solid #ffffff40; }
-        .block-T { background-color: #a000f0; box-shadow: 0 0 8px #a000f0 inset, 0 0 4px #a000f0; border: 1px solid #ffffff40; }
-        .block-S { background-color: #00f000; box-shadow: 0 0 8px #00f000 inset, 0 0 4px #00f000; border: 1px solid #ffffff40; }
-        .block-Z { background-color: #f00000; box-shadow: 0 0 8px #f00000 inset, 0 0 4px #f00000; border: 1px solid #ffffff40; }
-        .block-J { background-color: #0000f0; box-shadow: 0 0 8px #0000f0 inset, 0 0 4px #0000f0; border: 1px solid #ffffff40; }
-        .block-L { background-color: #f0a000; box-shadow: 0 0 8px #f0a000 inset, 0 0 4px #f0a000; border: 1px solid #ffffff40; }
-        
-        /* 착지 가이드 그림자(Ghost) 블록 스타일 */
-        .block-ghost {
-            background-color: rgba(255, 255, 255, 0.12);
-            border: 1.5px dashed rgba(255, 255, 255, 0.45);
-            box-shadow: 0 0 6px rgba(255, 255, 255, 0.15) inset;
+        /* 커스텀 스크롤바 디자인 */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3730a3;
+            border-radius: 4px;
         }
 
-        /* 그리드 셀 */
+        /* 테트리스 블록 네온 클래스 */
+        .block-I { background-color: #00f0f0; box-shadow: 0 0 8px #00f0f0 inset, 0 0 4px #00f0f0; border: 1px solid #ffffff50; }
+        .block-O { background-color: #f0f000; box-shadow: 0 0 8px #f0f000 inset, 0 0 4px #f0f000; border: 1px solid #ffffff50; }
+        .block-T { background-color: #a000f0; box-shadow: 0 0 8px #a000f0 inset, 0 0 4px #a000f0; border: 1px solid #ffffff50; }
+        .block-S { background-color: #00f000; box-shadow: 0 0 8px #00f000 inset, 0 0 4px #00f000; border: 1px solid #ffffff50; }
+        .block-Z { background-color: #f00000; box-shadow: 0 0 8px #f00000 inset, 0 0 4px #f00000; border: 1px solid #ffffff50; }
+        .block-J { background-color: #0000f0; box-shadow: 0 0 8px #0000f0 inset, 0 0 4px #0000f0; border: 1px solid #ffffff50; }
+        .block-L { background-color: #f0a000; box-shadow: 0 0 8px #f0a000 inset, 0 0 4px #f0a000; border: 1px solid #ffffff50; }
+        
+        /* 고스트 블록 (착지 위치 점선 가이드) */
+        .block-ghost {
+            border: 2px dashed rgba(255, 255, 255, 0.4) !important;
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: none !important;
+        }
+
         .grid-cell {
             aspect-ratio: 1;
+            transition: background-color 0.03s ease;
         }
 
-        /* 메인 보드 컨테이너 1:2 비율 고정 */
-        .board-container {
-            aspect-ratio: 1 / 2;
-        }
-
-        /* --- 추가/수정된 레벨업 애니메이션 --- */
-
-        /* 공통 폭죽(파티클) */
-        @keyframes floatParticle {
-            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-140px) scale(0.3) rotate(360deg); opacity: 0; }
-        }
-        .confetti-particle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-            animation: floatParticle 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-
-        /* 1. 사람 캐릭터 만세 점프 축하 애니메이션 */
-        @keyframes cheerJump {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-16px) scale(1.08); }
-        }
-        @keyframes armRaiseL {
-            0%, 100% { transform: rotate(-15deg); }
-            50% { transform: rotate(-75deg); }
-        }
-        @keyframes armRaiseR {
-            0%, 100% { transform: rotate(15deg); }
-            50% { transform: rotate(75deg); }
-        }
-        .cheering-person {
-            animation: cheerJump 0.35s infinite ease-in-out;
-        }
-        .cheering-person:nth-child(1) { animation-delay: 0s; }
-        .cheering-person:nth-child(2) { animation-delay: 0.12s; }
-        .cheering-person:nth-child(3) { animation-delay: 0.24s; }
-
-        .arm-left {
-            transform-origin: 14px 22px;
-            animation: armRaiseL 0.35s infinite ease-in-out;
-        }
-        .arm-right {
-            transform-origin: 26px 22px;
-            animation: armRaiseR 0.35s infinite ease-in-out;
-        }
-
-        /* 2. 별(Star) 폭발 애니메이션 */
-        @keyframes starExplode {
-            0% { transform: scale(0) rotate(0deg); opacity: 0; }
-            50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-            100% { transform: scale(1) rotate(360deg); opacity: 0; }
-        }
-        .star-burst {
-            position: absolute;
-            animation: starExplode 1.5s ease-out forwards;
-        }
-
-        /* 3. 로켓(Rocket) 발사 애니메이션 */
-        @keyframes rocketLaunch {
-            0% { transform: translateY(100px) scale(0.5); opacity: 0; }
-            20% { transform: translateY(20px) scale(1); opacity: 1; }
-            80% { transform: translateY(-20px) scale(1); opacity: 1; }
-            100% { transform: translateY(-150px) scale(0.5); opacity: 0; }
-        }
-        @keyframes fireFlicker {
-            0%, 100% { transform: scaleY(1); opacity: 0.8; }
-            50% { transform: scaleY(1.3); opacity: 1; fill: #fbbf24; }
-        }
-        .rocket-ship {
-            animation: rocketLaunch 1.8s ease-in forwards;
-        }
-        .rocket-fire {
-            transform-origin: top;
-            animation: fireFlicker 0.1s infinite;
-        }
-
-        /* 4. 대형 왕관(Crown) 드롭 애니메이션 */
-        @keyframes crownDrop {
-            0% { transform: translateY(-80px) scale(2) rotate(10deg); opacity: 0; }
-            40% { transform: translateY(0) scale(1) rotate(-5deg); opacity: 1; }
-            60% { transform: translateY(-10px) scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(0) scale(1.1); opacity: 1; }
-        }
-        @keyframes gemShine {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.5) drop-shadow(0 0 5px white); }
-        }
-        .crown-item {
-            animation: crownDrop 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-        .crown-gem {
-            animation: gemShine 0.5s infinite;
-        }
-
-        /* 음표 일렁이는 애니메이션 */
-        @keyframes pulseMusic {
+        /* 음노트 애니메이션 */
+        @keyframes musicPulse {
             0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.15); opacity: 1; }
+            50% { transform: scale(1.25); opacity: 1; }
         }
-        .music-pulse {
-            animation: pulseMusic 1s infinite ease-in-out;
-        }
+        .music-pulse { animation: musicPulse 1.2s infinite ease-in-out; }
 
-        /* 사람 캐릭터 만세 점프 축하 애니메이션 */
-        @keyframes cheerJump {
+        /* 만세 캐릭터 애니메이션 */
+        @keyframes jumpHurrah {
             0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-16px) scale(1.08); }
+            50% { transform: translateY(-14px) scale(1.08); }
         }
-        @keyframes armRaiseL {
-            0%, 100% { transform: rotate(-15deg); }
-            50% { transform: rotate(-75deg); }
+        @keyframes waveLeftArm {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-40deg); }
         }
-        @keyframes armRaiseR {
-            0%, 100% { transform: rotate(15deg); }
-            50% { transform: rotate(75deg); }
+        @keyframes waveRightArm {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(40deg); }
         }
-        .cheering-person {
-            animation: cheerJump 0.35s infinite ease-in-out;
-        }
-        .cheering-person:nth-child(1) { animation-delay: 0s; }
-        .cheering-person:nth-child(2) { animation-delay: 0.12s; }
-        .cheering-person:nth-child(3) { animation-delay: 0.24s; }
+        .animate-hurrah-1 { animation: jumpHurrah 0.45s infinite ease-in-out; }
+        .animate-hurrah-2 { animation: jumpHurrah 0.45s infinite ease-in-out 0.15s; }
+        .animate-hurrah-3 { animation: jumpHurrah 0.45s infinite ease-in-out 0.3s; }
+        .animate-arm-left { transform-origin: top right; animation: waveLeftArm 0.45s infinite ease-in-out; }
+        .animate-arm-right { transform-origin: top left; animation: waveRightArm 0.45s infinite ease-in-out; }
 
-        .arm-left {
-            transform-origin: 14px 22px;
-            animation: armRaiseL 0.35s infinite ease-in-out;
+        /* 별 폭발 애니메이션 */
+        @keyframes starBurst {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
+            100% { transform: scale(1) rotate(360deg); opacity: 0.9; }
         }
-        .arm-right {
-            transform-origin: 26px 22px;
-            animation: armRaiseR 0.35s infinite ease-in-out;
+        .animate-star-burst { animation: starBurst 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* 로켓 발사 애니메이션 */
+        @keyframes rocketLaunch {
+            0% { transform: translateY(50px) scale(0.6); opacity: 0; }
+            40% { transform: translateY(0px) scale(1.1); opacity: 1; }
+            80% { transform: translateY(-30px) scale(1); opacity: 1; }
+            100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
         }
+        .animate-rocket-launch { animation: rocketLaunch 1.4s ease-in-out forwards; }
+
+        /* 왕관 드롭 애니메이션 */
+        @keyframes crownDrop {
+            0% { transform: translateY(-60px) scale(0.5) rotate(-15deg); opacity: 0; }
+            60% { transform: translateY(10px) scale(1.15) rotate(5deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+        }
+        .animate-crown-drop { animation: crownDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="w-screen overflow-hidden text-white flex flex-col justify-between p-1.5 sm:p-2 select-none pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
 
-    <!-- 상단 헤더 영역 -->
-    <header class="w-full max-w-sm md:max-w-md mx-auto flex items-center justify-between px-1 py-0.5 shrink-0">
-        <div class="flex items-center gap-1.5">
-            <h1 class="text-lg md:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 font-retro">
+    <!-- 1. 메인 메뉴 화면 (Main Menu Screen) -->
+    <div id="screen-menu" class="relative w-full max-w-sm md:max-w-md mx-auto my-auto flex flex-col items-center justify-center p-4 pt-7 bg-gray-900/80 backdrop-blur-xl border border-indigo-900/80 rounded-3xl shadow-2xl z-30">
+        <!-- 메인 메뉴 카드 박스 상단 여백에 완전히 분리되어 배치한 FREE GAME 표시 -->
+        <div class="absolute -top-7 left-5 bg-gradient-to-r from-emerald-500/30 to-green-500/30 border border-emerald-400/60 text-emerald-300 text-[10px] font-retro font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg shadow-emerald-950/60 backdrop-blur-md z-40">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> FREE GAME
+        </div>
+
+        <div class="text-center mb-5">
+            <h1 class="text-3xl md:text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 font-retro drop-shadow-lg mb-1">
                 HOCHANI TETRIS
             </h1>
-            <i id="bgm-indicator" class="fa-solid fa-music text-[10px] text-pink-400 music-pulse hidden"></i>
+            <p class="text-[10px] md:text-xs text-cyan-300 font-retro tracking-widest">RETRO ARCADE EXPERIENCE</p>
         </div>
-        <div class="flex items-center gap-1.5">
-            <!-- 사운드 토글 버튼 -->
-            <button id="sound-toggle" class="p-1.5 bg-gray-800/80 hover:bg-gray-700 active:scale-95 rounded-xl text-xs font-semibold transition border border-gray-700 flex items-center gap-1">
-                <i id="sound-icon" class="fa-solid fa-volume-high text-cyan-400 text-xs"></i>
-                <span id="sound-text" class="text-[9px] text-gray-300">BGM ON</span>
-            </button>
-            <!-- 일시정지 버튼 -->
-            <button id="pause-btn" class="p-1.5 bg-gray-800/80 hover:bg-gray-700 active:scale-95 rounded-xl text-xs font-semibold transition border border-gray-700">
-                <i class="fa-solid fa-pause text-yellow-400 text-xs"></i>
-            </button>
-        </div>
-    </header>
 
-    <!-- 방문자 수 카운터 현황판 -->
-    <div class="w-full max-w-sm md:max-w-md mx-auto my-0.5 flex items-center justify-between px-2 py-0.5 bg-gray-900/60 backdrop-blur-md border border-gray-800/80 rounded-xl text-[9px] md:text-xs text-gray-300 shrink-0">
-        <div class="flex items-center gap-1">
-            <i class="fa-solid fa-users text-cyan-400 text-[10px]"></i>
-            <span class="font-semibold text-gray-400">VISITORS</span>
+        <!-- 닉네임 입력란 -->
+        <div class="w-full bg-gray-950/80 border border-indigo-800/60 rounded-2xl p-3 mb-4 flex flex-col gap-1.5 shadow-inner">
+            <label for="player-name-input" class="text-[11px] font-bold text-gray-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-user-astronaut text-cyan-400"></i> 플레이어 이름 (닉네임)
+            </label>
+            <input id="player-name-input" type="text" maxlength="8" placeholder="이름을 입력하세요" value="" 
+                   class="w-full bg-gray-900 border border-gray-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-sm text-center text-yellow-300 font-retro font-bold outline-none transition">
         </div>
-        <div class="flex items-center gap-2 font-retro">
-            <span>TODAY <strong id="today-visits" class="text-cyan-400 font-bold">--</strong></span>
-            <span class="text-gray-600">|</span>
-            <span>TOTAL <strong id="total-visits" class="text-yellow-400 font-bold">--</strong></span>
+
+        <!-- 최고 점수 배지 -->
+        <div class="w-full bg-gray-950/70 border border-gray-800 rounded-2xl p-3 mb-5 flex items-center justify-between px-4 shadow-inner">
+            <span class="text-xs text-gray-400 font-bold font-retro flex items-center gap-1.5">
+                <i class="fa-solid fa-trophy text-yellow-400"></i> BEST SCORE
+            </span>
+            <span id="menu-best-score" class="text-lg font-bold font-retro text-yellow-400">000000</span>
+        </div>
+
+        <!-- 메인 메뉴 버튼 목록 -->
+        <div class="w-full flex flex-col gap-2.5">
+            <button id="btn-start-game" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-95 text-white font-bold rounded-2xl shadow-lg shadow-cyan-500/30 transition text-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> 게임 시작
+            </button>
+            <button id="btn-show-how" class="w-full py-2.5 bg-gray-800 hover:bg-gray-700 active:scale-95 text-gray-200 font-bold rounded-2xl border border-gray-700 transition text-xs flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-info text-pink-400"></i> 게임 방법
+            </button>
+            <button id="btn-show-rank" class="w-full py-2.5 bg-gray-800 hover:bg-gray-700 active:scale-95 text-gray-200 font-bold rounded-2xl border border-gray-700 transition text-xs flex items-center justify-center gap-2">
+                <i class="fa-solid fa-ranking-star text-yellow-400"></i> 명예의 전당 (실시간 랭킹)
+            </button>
         </div>
     </div>
 
-    <!-- 게임 대시보드 (점수, 레벨, 라인, 다음 블록) -->
-    <section class="w-full max-w-sm md:max-w-md mx-auto my-0.5 grid grid-cols-4 gap-1 text-center shrink-0">
-        <!-- SCORE -->
-        <div class="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-xl p-1 flex flex-col justify-center">
-            <span class="text-[8px] md:text-xs text-gray-400 font-bold uppercase">SCORE</span>
-            <span id="score" class="text-xs md:text-lg font-bold font-retro text-yellow-400 truncate">000000</span>
+    <!-- 2. 게임 방법 안내 화면 (How to Play Screen) -->
+    <div id="screen-how" class="w-full max-w-sm md:max-w-md mx-auto my-auto flex flex-col items-center justify-between p-4 bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-3xl shadow-2xl z-30 hidden h-[85vh]">
+        <div class="w-full text-center border-b border-gray-800 pb-2 mb-2">
+            <h2 class="text-lg font-bold font-retro text-pink-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-gamepad"></i> HOW TO PLAY
+            </h2>
         </div>
-        <!-- LEVEL -->
-        <div class="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-xl p-1 flex flex-col justify-center">
-            <span class="text-[8px] md:text-xs text-gray-400 font-bold uppercase">LEVEL</span>
-            <span id="level" class="text-xs md:text-lg font-bold font-retro text-cyan-400">1</span>
-        </div>
-        <!-- LINES -->
-        <div class="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-xl p-1 flex flex-col justify-center">
-            <span class="text-[8px] md:text-xs text-gray-400 font-bold uppercase">LINES</span>
-            <span id="lines" class="text-xs md:text-lg font-bold font-retro text-pink-500">0</span>
-        </div>
-        <!-- NEXT -->
-        <div class="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-xl p-0.5 flex flex-col items-center justify-center">
-            <span class="text-[8px] md:text-xs text-gray-400 font-bold uppercase mb-0.5">NEXT</span>
-            <div id="next-preview" class="grid grid-cols-4 gap-[1px] w-6 h-6 md:w-9 md:h-9 items-center justify-center">
-                <!-- 다음 블록 표시 -->
-            </div>
-        </div>
-    </section>
 
-    <!-- 메인 테트리스 보드 -->
-    <main class="flex-1 min-h-0 w-full flex items-center justify-center py-1 overflow-hidden">
-        <div class="board-container relative h-full max-h-full bg-gray-950/90 border-2 md:border-4 border-indigo-900/80 rounded-2xl p-1 shadow-2xl shadow-indigo-950/50 flex items-center justify-center">
-            <!-- 그리드 보드 (10x20) -->
-            <div id="board" class="w-full h-full grid grid-cols-10 grid-rows-20 gap-[1px] bg-gray-900/40 rounded-lg overflow-hidden">
-                <!-- 셀 동적 삽입 -->
-            </div>
-
-            <!-- 레벨 업 축하 연출 오버레이 -->
-            <div id="level-up-overlay" class="absolute inset-0 bg-indigo-950/85 backdrop-blur-md flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-300 z-20 hidden pointer-events-none overflow-hidden">
-                <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
-                
-                <h3 class="text-2xl md:text-3xl font-black font-retro tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse mt-4">
-                    LEVEL UP!
+        <div class="w-full flex-1 overflow-y-auto text-xs text-gray-300 space-y-3 px-1 pr-2">
+            <!-- 모바일 조작법 -->
+            <div class="bg-gray-950/60 p-3 rounded-2xl border border-gray-800">
+                <h3 class="font-bold text-cyan-400 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen"></i> 스마트폰 조작법
                 </h3>
-                <p id="level-up-text" class="text-base md:text-lg font-bold font-retro text-cyan-300 mt-0.5 mb-2">LEVEL 2</p>
-
-                <!-- 동적 애니메이션 컨테이너 (JS에서 교체됨) -->
-                <div id="animation-container" class="relative w-32 h-32 flex items-center justify-center my-2 z-10">
-                    <!-- 애니메이션이 여기에 삽입됩니다 -->
-                </div>
-
-                <span class="text-[11px] md:text-xs text-gray-200 bg-pink-500/40 px-3 py-0.5 rounded-full border border-pink-400/60 font-semibold tracking-wider mt-2">SPEED UP! ⚡ & BOARD CLEARED!</span>
+                <ul class="list-disc list-inside space-y-1 text-gray-300 text-[11px]">
+                    <li><strong class="text-white">하단 가상 버튼</strong>: 좌/우/하강/회전/즉시낙하</li>
+                    <li><strong class="text-white">화면 드래그</strong>: 좌우 슬라이드로 이동</li>
+                    <li><strong class="text-white">화면 탭</strong>: 보드를 누르면 블록 회전</li>
+                </ul>
             </div>
 
-            <!-- 게임 오버레이 -->
-            <div id="overlay" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-300 z-10">
-                <h2 id="overlay-title" class="text-2xl md:text-3xl font-black font-retro tracking-widest text-pink-500 mb-2">READY?</h2>
-                <p id="overlay-msg" class="text-xs text-gray-300 mb-5">신나는 8비트 음악과 함께 시작하세요!</p>
-                <button id="start-btn" class="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 transition text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-play"></i> 게임 시작
+            <!-- PC 조작법 -->
+            <div class="bg-gray-950/60 p-3 rounded-2xl border border-gray-800">
+                <h3 class="font-bold text-yellow-400 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-keyboard"></i> PC 키보드 조작법
+                </h3>
+                <ul class="list-disc list-inside space-y-1 text-gray-300 text-[11px]">
+                    <li><strong class="text-white">← / → 방향키</strong>: 좌우 이동</li>
+                    <li><strong class="text-white">↑ 방향키</strong>: 블록 회전</li>
+                    <li><strong class="text-white">↓ 방향키</strong>: 빠른 하강</li>
+                    <li><strong class="text-white">Spacebar</strong>: 즉시 낙하 (하드드롭)</li>
+                    <li><strong class="text-white">P / Esc</strong>: 게임 일시정지</li>
+                </ul>
+            </div>
+
+            <!-- 특별 규칙 -->
+            <div class="bg-gray-950/60 p-3 rounded-2xl border border-gray-800">
+                <h3 class="font-bold text-pink-400 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-star"></i> 특별 레벨업 규칙
+                </h3>
+                <p class="text-[11px] leading-relaxed text-gray-300">
+                    10줄 제거 시 <strong class="text-cyan-300">LEVEL UP</strong>이 발동하며, 보드의 모든 블록이 초기화되고 다양하고 신나는 축하 애니메이션이 피어오릅니다!
+                </p>
+            </div>
+        </div>
+
+        <button id="btn-how-back" class="w-full mt-3 py-2.5 bg-gray-800 hover:bg-gray-700 active:scale-95 text-white font-bold rounded-2xl border border-gray-700 transition text-xs flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-house"></i> 메인 메뉴로
+        </button>
+    </div>
+
+    <!-- 3. 랭킹 명예의 전당 화면 (Leaderboard Screen) -->
+    <div id="screen-rank" class="w-full max-w-sm md:max-w-md mx-auto my-auto flex flex-col items-center justify-between p-4 bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-3xl shadow-2xl z-30 hidden h-[82vh]">
+        <div class="w-full text-center border-b border-gray-800 pb-2 mb-2">
+            <h2 class="text-lg font-bold font-retro text-yellow-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-trophy"></i> HALL OF FAME
+            </h2>
+            <p class="text-[10px] text-gray-400 font-retro mt-0.5">REAL-TIME TOP 10 HIGH SCORES</p>
+        </div>
+
+        <!-- 랭킹 리스트 -->
+        <div id="rank-list" class="w-full flex-1 flex flex-col gap-1.5 overflow-y-auto px-1 py-1">
+            <!-- 자바스크립트로 랭킹 기록이 삽입됩니다 -->
+        </div>
+
+        <div class="w-full flex gap-2 mt-3">
+            <button id="btn-reset-rank" class="w-1/3 py-2.5 bg-red-900/40 hover:bg-red-800/60 active:scale-95 text-red-300 text-[11px] font-bold rounded-2xl border border-red-800/50 transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-trash-can"></i> 기록 삭제
+            </button>
+            <button id="btn-rank-back" class="w-2/3 py-2.5 bg-gray-800 hover:bg-gray-700 active:scale-95 text-white font-bold rounded-2xl border border-gray-700 transition text-xs flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-house"></i> 메인 메뉴로
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. 메인 게임 화면 (Game Play Screen) -->
+    <div id="screen-game" class="w-full max-w-sm md:max-w-md mx-auto flex flex-col justify-between h-full hidden">
+        <!-- 상단 헤더 영역 -->
+        <header class="w-full mx-auto flex items-center justify-between px-1 py-0.5 shrink-0">
+            <div class="flex items-center gap-1.5">
+                <button id="btn-game-home" class="px-2 py-1 bg-gray-800/80 hover:bg-gray-700 active:scale-95 rounded-xl text-[10px] font-semibold transition border border-gray-700 text-gray-300 flex items-center gap-1">
+                    <i class="fa-solid fa-house text-cyan-400"></i> 메뉴
+                </button>
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-xs md:text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 font-retro leading-none">
+                            HOCHANI TETRIS
+                        </h1>
+                        <!-- 게임 화면 내 박스 테두리를 제거한 텍스트형 FREE GAME -->
+                        <span class="text-emerald-400 text-[9px] font-retro font-bold flex items-center gap-1 leading-none">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>FREE GAME
+                        </span>
+                    </div>
+                    <span id="game-player-badge" class="text-[10px] text-yellow-300 font-bold truncate max-w-[80px]">HOCHANI</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="sound-toggle" class="p-1.5 bg-gray-800/80 hover:bg-gray-700 active:scale-95 rounded-xl text-xs font-semibold transition border border-gray-700 flex items-center gap-1">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-cyan-400 text-xs"></i>
+                    <span id="sound-text" class="text-[9px] text-gray-300">BGM ON</span>
+                </button>
+                <button id="pause-btn" class="p-1.5 bg-gray-800/80 hover:bg-gray-700 active:scale-95 rounded-xl text-xs font-semibold transition border border-gray-700">
+                    <i class="fa-solid fa-pause text-yellow-400 text-xs"></i>
                 </button>
             </div>
-        </div>
-    </main>
+        </header>
 
-    <!-- 모바일 게임패드 컨트롤러 -->
-    <footer class="w-full max-w-sm md:max-w-md mx-auto py-0.5 px-1 shrink-0 z-10">
-        <div class="grid grid-cols-5 gap-1 sm:gap-1.5 items-center">
-            <button id="ctrl-left" class="h-10 sm:h-12 bg-gray-800/90 active:bg-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl text-cyan-400 active:text-white shadow-md active:scale-95 transition border border-gray-700/60 touch-none">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <button id="ctrl-down" class="h-10 sm:h-12 bg-gray-800/90 active:bg-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl text-cyan-400 active:text-white shadow-md active:scale-95 transition border border-gray-700/60 touch-none">
-                <i class="fa-solid fa-arrow-down"></i>
-            </button>
-            <button id="ctrl-right" class="h-10 sm:h-12 bg-gray-800/90 active:bg-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl text-cyan-400 active:text-white shadow-md active:scale-95 transition border border-gray-700/60 touch-none">
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-            <button id="ctrl-rotate" class="h-10 sm:h-12 bg-indigo-900/90 active:bg-pink-600 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl text-pink-400 active:text-white shadow-md active:scale-95 transition border border-indigo-700/60 touch-none">
-                <i class="fa-solid fa-rotate"></i>
-            </button>
-            <button id="ctrl-drop" class="h-10 sm:h-12 bg-gradient-to-r from-pink-600 to-purple-600 active:from-pink-500 active:to-purple-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl text-white shadow-md active:scale-95 transition touch-none">
-                <i class="fa-solid fa-angles-down"></i>
-            </button>
+        <!-- 방문자 카운터 현황판 -->
+        <div id="visitor-counter" class="w-full mx-auto px-2 py-0.5 bg-gray-900/60 border border-gray-800 rounded-lg text-[9px] font-retro text-gray-400 flex items-center justify-between my-0.5">
+            <div class="flex items-center gap-1">
+                <i class="fa-solid fa-users text-cyan-400 text-[9px]"></i>
+                <span>VISITORS:</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span>TODAY <strong id="v-today" class="text-cyan-300 font-bold">1</strong></span>
+                <span class="text-gray-600">|</span>
+                <span>TOTAL <strong id="v-total" class="text-yellow-400 font-bold">128</strong></span>
+            </div>
         </div>
-    </footer>
+
+        <!-- 게임 대시보드 (점수, 레벨, 라인, 다음 블록) -->
+        <div class="w-full grid grid-cols-4 gap-1 px-0.5 shrink-0 my-0.5">
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-1 text-center flex flex-col justify-center">
+                <div class="text-[8px] text-gray-400 font-retro font-bold">SCORE</div>
+                <div id="score" class="text-xs md:text-sm font-bold font-retro text-yellow-400 truncate">000000</div>
+            </div>
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-1 text-center flex flex-col justify-center">
+                <div class="text-[8px] text-gray-400 font-retro font-bold">LEVEL</div>
+                <div id="level" class="text-xs md:text-sm font-bold font-retro text-cyan-400">1</div>
+            </div>
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-1 text-center flex flex-col justify-center">
+                <div class="text-[8px] text-gray-400 font-retro font-bold">LINES</div>
+                <div id="lines" class="text-xs md:text-sm font-bold font-retro text-pink-500">0</div>
+            </div>
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-1 flex flex-col items-center justify-center">
+                <div class="text-[8px] text-gray-400 font-retro font-bold mb-0.5">NEXT</div>
+                <div id="next-preview" class="grid grid-cols-4 gap-[1px] w-7 h-7"></div>
+            </div>
+        </div>
+
+        <!-- 메인 테트리스 보드 -->
+        <main class="flex-1 min-h-0 w-full flex items-center justify-center py-1 overflow-hidden">
+            <div class="board-container relative h-full max-h-full bg-gray-950/90 border-2 md:border-4 border-indigo-900/80 rounded-2xl p-1 shadow-2xl shadow-indigo-950/50 flex items-center justify-center">
+                <div id="board" class="w-full h-full grid grid-cols-10 grid-rows-20 gap-[1px] bg-gray-900/40 rounded-lg overflow-hidden">
+                </div>
+
+                <!-- 레벨 업 축하 연출 오버레이 -->
+                <div id="level-up-overlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center rounded-xl p-3 text-center transition-all duration-300 z-20 hidden backdrop-blur-sm">
+                    <div id="lvl-anim-container" class="mb-2 flex items-center justify-center min-h-[70px]"></div>
+                    <h2 class="text-xl md:text-2xl font-black font-retro tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 animate-pulse">
+                        LEVEL UP!
+                    </h2>
+                    <p id="level-up-msg" class="text-xs font-bold text-yellow-300 mt-1">LEVEL 2 REACHED</p>
+                    <p class="text-[10px] text-cyan-300 font-semibold mt-0.5">BOARD CLEARED!</p>
+                </div>
+
+                <!-- 게임 시작/일시정지/게임오버 오버레이 -->
+                <div id="overlay" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-300 z-10">
+                    <h2 id="overlay-title" class="text-2xl md:text-3xl font-black font-retro tracking-widest text-pink-500 mb-2">READY?</h2>
+                    <p id="overlay-msg" class="text-xs text-gray-300 mb-4">신나는 8비트 음악과 함께 시작하세요!</p>
+                    <div class="flex flex-col gap-2 w-full max-w-[200px]">
+                        <button id="start-btn" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 transition text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> 게임 시작
+                        </button>
+                        <button id="overlay-menu-btn" class="px-5 py-2 bg-gray-800 hover:bg-gray-700 active:scale-95 text-gray-300 font-semibold rounded-xl transition text-xs flex items-center justify-center gap-1.5 border border-gray-700">
+                            <i class="fa-solid fa-house"></i> 메인 메뉴로
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 모바일 게임패드 컨트롤러 -->
+        <footer class="w-full max-w-sm md:max-w-md mx-auto py-0.5 px-1 shrink-0 z-10">
+            <div class="grid grid-cols-5 gap-1 bg-gray-900/60 backdrop-blur-md p-1.5 rounded-2xl border border-gray-800/80">
+                <button id="ctrl-left" class="h-10 md:h-11 bg-gray-800/90 active:bg-cyan-600 rounded-xl flex items-center justify-center text-base active:scale-95 transition border border-gray-700/60 text-cyan-300">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <button id="ctrl-down" class="h-10 md:h-11 bg-gray-800/90 active:bg-cyan-600 rounded-xl flex items-center justify-center text-base active:scale-95 transition border border-gray-700/60 text-cyan-300">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>
+                <button id="ctrl-right" class="h-10 md:h-11 bg-gray-800/90 active:bg-cyan-600 rounded-xl flex items-center justify-center text-base active:scale-95 transition border border-gray-700/60 text-cyan-300">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button id="ctrl-rotate" class="h-10 md:h-11 bg-gray-800/90 active:bg-pink-600 rounded-xl flex items-center justify-center text-base active:scale-95 transition border border-gray-700/60 text-pink-400">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button id="ctrl-drop" class="h-10 md:h-11 bg-gradient-to-r from-pink-600 to-purple-600 active:from-pink-500 active:to-purple-500 rounded-xl flex items-center justify-center text-base active:scale-95 transition text-white shadow-md shadow-pink-600/30">
+                    <i class="fa-solid fa-angles-down"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
 
     <script>
-        // --- 1. 전역 설정 및 변수 선언 ---
+        // --- 1. 모바일 화면 높이 보정 ---
+        function updateCustomVh() {
+            const vh = window.innerHeight;
+            document.documentElement.style.setProperty('--app-height', `${vh}px`);
+        }
+        window.addEventListener('resize', updateCustomVh);
+        window.addEventListener('orientationchange', updateCustomVh);
+        updateCustomVh();
+
+        // --- 2. 전역 설정 및 변수 선언 ---
         const COLS = 10;
         const ROWS = 20;
         
@@ -319,6 +374,7 @@
         let isPaused = false;
         let gameStarted = false;
         let soundEnabled = true;
+        let playerName = "HOCHANI";
 
         let dropCounter = 0;
         let dropInterval = 1000;
@@ -335,41 +391,13 @@
         };
 
         const TETROMINOS = {
-            1: [
-                [0, 0, 0, 0],
-                [1, 1, 1, 1],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0]
-            ],
-            2: [
-                [2, 2],
-                [2, 2]
-            ],
-            3: [
-                [0, 3, 0],
-                [3, 3, 3],
-                [0, 0, 0]
-            ],
-            4: [
-                [0, 4, 4],
-                [4, 4, 0],
-                [0, 0, 0]
-            ],
-            5: [
-                [5, 5, 0],
-                [0, 5, 5],
-                [0, 0, 0]
-            ],
-            6: [
-                [6, 0, 0],
-                [6, 6, 6],
-                [0, 0, 0]
-            ],
-            7: [
-                [0, 0, 7],
-                [7, 7, 7],
-                [0, 0, 0]
-            ]
+            1: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+            2: [[2,2],[2,2]],
+            3: [[0,3,0],[3,3,3],[0,0,0]],
+            4: [[0,4,4],[4,4,0],[0,0,0]],
+            5: [[5,5,0],[0,5,5],[0,0,0]],
+            6: [[6,0,0],[6,6,6],[0,0,0]],
+            7: [[0,0,7],[7,7,7],[0,0,0]]
         };
 
         const player = {
@@ -381,187 +409,80 @@
         let nextMatrix = null;
         let nextTypeId = 0;
 
-        // --- Web Audio API 음원 합성 엔진 ---
+        // --- 3. Web Audio API 사운드 및 BGM 엔진 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let bgmIntervalId = null;
+        let bgmStep = 0;
 
-        // 8비트 사운드 효과음 재생 함수
-        function playSynthSound(freqs, duration, type = 'sine') {
-            if (!soundEnabled) return;
+        const originalMelody = [
+            { note: 329.63, duration: 0.25 }, { note: 246.94, duration: 0.25 }, { note: 261.63, duration: 0.25 }, { note: 293.66, duration: 0.25 },
+            { note: 261.63, duration: 0.25 }, { note: 246.94, duration: 0.25 }, { note: 220.00, duration: 0.50 }, { note: 220.00, duration: 0.25 },
+            { note: 261.63, duration: 0.25 }, { note: 329.63, duration: 0.25 }, { note: 293.66, duration: 0.25 }, { note: 261.63, duration: 0.25 },
+            { note: 246.94, duration: 0.50 }, { note: 261.63, duration: 0.25 }, { note: 293.66, duration: 0.25 }, { note: 329.63, duration: 0.50 }
+        ];
+
+        function playTone(freq, duration, type = 'square', gainVal = 0.08) {
+            if (!soundEnabled || !freq) return;
             try {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 
-                freqs.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-                    
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
-                    
-                    gainNode.gain.setValueAtTime(0.12, now + (idx * 0.08));
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.08) + duration);
-                    
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    
-                    osc.start(now + (idx * 0.08));
-                    osc.stop(now + (idx * 0.08) + duration);
-                });
-            } catch (e) {
-                console.error("Audio error", e);
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, now);
+                
+                gain.gain.setValueAtTime(gainVal, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + duration);
+            } catch (e) {}
+        }
+
+        function startBGM() {
+            if (bgmIntervalId || !soundEnabled) return;
+            bgmStep = 0;
+            bgmIntervalId = setInterval(() => {
+                if (!gameStarted || isPaused || isGameOver || !soundEnabled) return;
+                const item = originalMelody[bgmStep % originalMelody.length];
+                playTone(item.note, item.duration, 'square', 0.05);
+                bgmStep++;
+            }, 260);
+        }
+
+        function stopBGM() {
+            if (bgmIntervalId) {
+                clearInterval(bgmIntervalId);
+                bgmIntervalId = null;
             }
         }
 
         const soundEffects = {
-            move: () => playSynthSound([150], 0.08, 'square'),
-            rotate: () => playSynthSound([300, 400], 0.1, 'triangle'),
-            clear: () => playSynthSound([330, 392, 523, 659], 0.35, 'sine'),
-            drop: () => playSynthSound([90], 0.12, 'sawtooth'),
-            gameOver: () => playSynthSound([220, 196, 174, 147], 0.5, 'sawtooth'),
-            levelUp: () => playSynthSound([392, 523, 659, 784, 1046], 0.25, 'triangle')
-        };
-
-        // --- 8비트 독자 오리지널 아케이드 BGM 루퍼 (저작권 침해 방지 멜로디) ---
-        // 음높이 표 (Hz)
-        const N = {
-            C6: 1046.50, B5: 987.77, A5: 880.00, GS5: 830.61, G5: 783.99, F5: 698.46, E5: 659.25, D5: 587.33, C5: 523.25,
-            B4: 493.88, A4: 440.00, GS4: 415.30, G4: 392.00, F4: 349.23, E4: 329.63, D4: 293.66, C4: 261.63,
-            B3: 246.94, A3: 220.00, GS3: 207.65, G3: 196.00, F3: 174.61, E3: 164.81, D3: 146.83, C3: 130.81, A2: 110.00, REST: 0
-        };
-
-        // HOCHANI TETRIS 전용 독자 멜로디 [노트, 템포 박자]
-        const bgmMelody = [
-            // A 파트 - 경쾌한 레트로 아케이드 멜로디
-            [N.A4, 2], [N.C5, 2], [N.E5, 2], [N.D5, 1], [N.C5, 1],
-            [N.B4, 2], [N.D5, 2], [N.C5, 2], [N.B4, 1], [N.A4, 1],
-            [N.GS4, 2], [N.B4, 2], [N.E5, 2], [N.D5, 2],
-            [N.C5, 2], [N.B4, 2], [N.A4, 2], [N.REST, 2],
-
-            [N.A4, 2], [N.C5, 2], [N.E5, 2], [N.A5, 2],
-            [N.G5, 1], [N.F5, 1], [N.E5, 2], [N.D5, 2], [N.F5, 2],
-            [N.E5, 2], [N.D5, 1], [N.C5, 1], [N.B4, 2], [N.E5, 2],
-            [N.A4, 2], [N.C5, 2], [N.A4, 2], [N.REST, 2],
-
-            // B 파트 - 고조되는 하이라이트 구간
-            [N.C5, 2], [N.E5, 2], [N.G5, 2], [N.F5, 1], [N.E5, 1],
-            [N.D5, 2], [N.F5, 2], [N.A5, 2], [N.G5, 1], [N.F5, 1],
-            [N.E5, 2], [N.G5, 2], [N.C6, 2], [N.B5, 1], [N.A5, 1],
-            [N.GS5, 2], [N.B5, 2], [N.E5, 4],
-
-            [N.A5, 2], [N.E5, 2], [N.C5, 2], [N.E5, 2],
-            [N.F5, 2], [N.D5, 2], [N.B4, 2], [N.D5, 2],
-            [N.E5, 2], [N.C5, 2], [N.B4, 2], [N.GS4, 2],
-            [N.A4, 2], [N.C5, 2], [N.A4, 2], [N.REST, 2]
-        ];
-
-        // HOCHANI TETRIS 독자 베이스 라인
-        const bgmBass = [
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.E3, 2],
-            [N.E3, 2], [N.GS3, 2], [N.E3, 2], [N.GS3, 2],
-            [N.E3, 2], [N.GS3, 2], [N.E3, 2], [N.GS3, 2],
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.REST, 2],
-
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.E3, 2],
-            [N.D3, 2], [N.F3, 2], [N.D3, 2], [N.F3, 2],
-            [N.E3, 2], [N.GS3, 2], [N.E3, 2], [N.GS3, 2],
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.REST, 2],
-
-            [N.C3, 2], [N.G3, 2], [N.C3, 2], [N.G3, 2],
-            [N.D3, 2], [N.A3, 2], [N.D3, 2], [N.A3, 2],
-            [N.C3, 2], [N.G3, 2], [N.C3, 2], [N.G3, 2],
-            [N.E3, 2], [N.GS3, 2], [N.E3, 2], [N.GS3, 2],
-
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.E3, 2],
-            [N.D3, 2], [N.A3, 2], [N.D3, 2], [N.A3, 2],
-            [N.E3, 2], [N.GS3, 2], [N.E3, 2], [N.GS3, 2],
-            [N.A2, 2], [N.E3, 2], [N.A2, 2], [N.REST, 2]
-        ];
-
-        let bgmTimeout = null;
-        let bgmIndex = 0;
-        let bgmBassIndex = 0;
-        let bgmIsPlaying = false;
-        const BEAT_TIME = 0.14; // 한 박자 시간(초)
-
-        function playBGMStep() {
-            if (!bgmIsPlaying || !soundEnabled) return;
-
-            try {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-
-                const now = audioCtx.currentTime;
-                
-                // 1. 멜로디 노트 연주
-                const [freq, beats] = bgmMelody[bgmIndex];
-                const noteDuration = beats * BEAT_TIME;
-
-                if (freq > 0) {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    
-                    osc.type = 'square'; // 8비트 오락실 사각파 음색
-                    osc.frequency.setValueAtTime(freq, now);
-                    
-                    gain.gain.setValueAtTime(0.04, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + noteDuration - 0.02);
-                    
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    
-                    osc.start(now);
-                    osc.stop(now + noteDuration);
-                }
-
-                // 2. 베이스 노트 연주 (둥둥거리는 리듬)
-                const [bassFreq, bassBeats] = bgmBass[bgmBassIndex];
-                if (bassFreq > 0) {
-                    const bassOsc = audioCtx.createOscillator();
-                    const bassGain = audioCtx.createGain();
-
-                    bassOsc.type = 'triangle'; // 부드러운 삼각파 베이스
-                    bassOsc.frequency.setValueAtTime(bassFreq, now);
-
-                    bassGain.gain.setValueAtTime(0.06, now);
-                    bassGain.gain.exponentialRampToValueAtTime(0.001, now + (bassBeats * BEAT_TIME) - 0.02);
-
-                    bassOsc.connect(bassGain);
-                    bassGain.connect(audioCtx.destination);
-
-                    bassOsc.start(now);
-                    bassOsc.stop(now + (bassBeats * BEAT_TIME));
-                }
-
-                // 다음 인덱스 계산
-                bgmIndex = (bgmIndex + 1) % bgmMelody.length;
-                bgmBassIndex = (bgmBassIndex + 1) % bgmBass.length;
-
-                // 다음 박자 타이머 스케줄
-                bgmTimeout = setTimeout(playBGMStep, noteDuration * 1000);
-            } catch (e) {
-                console.error("BGM error", e);
+            move: () => playTone(200, 0.06, 'square', 0.1),
+            rotate: () => playTone(400, 0.08, 'triangle', 0.12),
+            clear: () => {
+                [300, 450, 600, 800].forEach((f, i) => setTimeout(() => playTone(f, 0.1, 'sine', 0.15), i * 50));
+            },
+            drop: () => playTone(100, 0.1, 'sawtooth', 0.15),
+            levelUp: () => {
+                [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle', 0.2), i * 80));
+            },
+            gameOver: () => {
+                [200, 180, 160, 130].forEach((f, i) => setTimeout(() => playTone(f, 0.2, 'sawtooth', 0.18), i * 100));
             }
-        }
+        };
 
-        function startBGM() {
-            if (bgmIsPlaying) return;
-            bgmIsPlaying = true;
-            bgmIndex = 0;
-            bgmBassIndex = 0;
-            const bgmIndicator = document.getElementById('bgm-indicator');
-            if (bgmIndicator) bgmIndicator.classList.remove('hidden');
-            playBGMStep();
-        }
-
-        function stopBGM() {
-            bgmIsPlaying = false;
-            if (bgmTimeout) clearTimeout(bgmTimeout);
-            const bgmIndicator = document.getElementById('bgm-indicator');
-            if (bgmIndicator) bgmIndicator.classList.add('hidden');
-        }
+        // --- 4. DOM 캐싱 및 UI 초기화 ---
+        const screens = {
+            menu: document.getElementById('screen-menu'),
+            how: document.getElementById('screen-how'),
+            rank: document.getElementById('screen-rank'),
+            game: document.getElementById('screen-game')
+        };
 
         const boardEl = document.getElementById('board');
         const nextPreviewEl = document.getElementById('next-preview');
@@ -572,21 +493,17 @@
         const scoreEl = document.getElementById('score');
         const linesEl = document.getElementById('lines');
         const levelEl = document.getElementById('level');
-        const soundToggleBtn = document.getElementById('sound-toggle');
-        const soundIconEl = document.getElementById('sound-icon');
-        const soundTextEl = document.getElementById('sound-text');
-        const pauseBtn = document.getElementById('pause-btn');
+        const playerNameInput = document.getElementById('player-name-input');
+        const gamePlayerBadge = document.getElementById('game-player-badge');
 
-        // 메인 그리드 셀 생성
         const cells = [];
         for (let i = 0; i < ROWS * COLS; i++) {
             const cell = document.createElement('div');
-            cell.className = 'grid-cell bg-gray-900/30 border border-gray-800/20 rounded-sm';
+            cell.className = 'grid-cell bg-gray-900/40 border border-gray-800/20 rounded-sm';
             boardEl.appendChild(cell);
             cells.push(cell);
         }
 
-        // 프리뷰 셀 생성 (4x4)
         const previewCells = [];
         for (let i = 0; i < 16; i++) {
             const cell = document.createElement('div');
@@ -595,11 +512,100 @@
             previewCells.push(cell);
         }
 
+        // --- 5. 화면 스위처 & 랭킹 시스템 ---
+        function showScreen(screenName) {
+            Object.keys(screens).forEach(key => {
+                if (key === screenName) {
+                    screens[key].classList.remove('hidden');
+                } else {
+                    screens[key].classList.add('hidden');
+                }
+            });
+
+            if (screenName === 'menu') {
+                updateBestScoreMenuUI();
+            } else if (screenName === 'rank') {
+                updateRankListUI();
+            }
+        }
+
+        function getHighScores() {
+            const scores = localStorage.getItem('hochani_tetris_scores_v2');
+            return scores ? JSON.parse(scores) : [
+                { name: 'HOCHANI', score: 12500, level: 5, date: '7월 31일' },
+                { name: 'RETRO_KING', score: 8400, level: 4, date: '7월 30일' },
+                { name: 'TETRIS_MASTER', score: 5200, level: 3, date: '7월 29일' }
+            ];
+        }
+
+        function saveHighScore(newScore, levelReached) {
+            if (newScore <= 0) return;
+            let scores = getHighScores();
+            const dateStr = new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+            
+            scores.push({
+                name: playerName,
+                score: newScore,
+                level: levelReached,
+                date: dateStr
+            });
+
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+
+            localStorage.setItem('hochani_tetris_scores_v2', JSON.stringify(scores));
+            updateBestScoreMenuUI();
+        }
+
+        function updateBestScoreMenuUI() {
+            const scores = getHighScores();
+            const bestScoreEl = document.getElementById('menu-best-score');
+            if (bestScoreEl) {
+                const topScore = scores.length > 0 ? scores[0].score : 0;
+                bestScoreEl.textContent = String(topScore).padStart(6, '0');
+            }
+        }
+
+        function updateRankListUI() {
+            const rankListEl = document.getElementById('rank-list');
+            if (!rankListEl) return;
+            
+            const scores = getHighScores();
+            rankListEl.innerHTML = '';
+
+            if (scores.length === 0) {
+                rankListEl.innerHTML = `
+                    <div class="text-center text-gray-500 my-auto py-8 text-xs font-semibold">
+                        등록된 기록이 없습니다.<br>첫 번째 랭커가 되어보세요!
+                    </div>
+                `;
+                return;
+            }
+
+            const rankBadges = ['🥇', '🥈', '🥉', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+            const rankColors = ['text-yellow-400', 'text-gray-300', 'text-amber-600', 'text-cyan-400'];
+
+            scores.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between bg-gray-950/80 border border-gray-800/80 rounded-2xl p-2 px-3 text-xs';
+                row.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="font-bold font-retro text-xs ${rankColors[idx] || 'text-gray-400'}">${rankBadges[idx]}</span>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-200 text-xs">${item.name || 'ANONYMOUS'}</span>
+                            <span class="text-[9px] text-gray-400">LV.${item.level} • ${item.date}</span>
+                        </div>
+                    </div>
+                    <span class="font-bold font-retro text-yellow-400 text-sm">${String(item.score).padStart(6, '0')} P</span>
+                `;
+                rankListEl.appendChild(row);
+            });
+        }
+
+        // --- 6. 테트리스 게임 코어 로직 ---
         function createMatrix(w, h) {
             const matrix = [];
-            while (h--) {
-                matrix.push(new Array(w).fill(0));
-            }
+            while (h--) matrix.push(new Array(w).fill(0));
             return matrix;
         }
 
@@ -633,7 +639,6 @@
         function collide(arena, player) {
             const m = player.matrix;
             const o = player.pos;
-            if (!m) return false;
             for (let y = 0; y < m.length; ++y) {
                 for (let x = 0; x < m[y].length; ++x) {
                     if (m[y][x] !== 0 &&
@@ -647,19 +652,8 @@
             return false;
         }
 
-        function merge(arena, player) {
-            player.matrix.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (value !== 0) {
-                        arena[y + player.pos.y][x + player.pos.x] = value;
-                    }
-                });
-            });
-        }
-
-        // 착지 예상 위치(고스트) 계산 함수
         function getGhostPosition() {
-            if (!player.matrix) return { x: 0, y: 0 };
+            if (!player.matrix) return null;
             const ghost = {
                 pos: { x: player.pos.x, y: player.pos.y },
                 matrix: player.matrix
@@ -671,9 +665,19 @@
             return ghost.pos;
         }
 
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                    }
+                });
+            });
+        }
+
         function draw() {
             for (let i = 0; i < cells.length; i++) {
-                cells[i].className = 'grid-cell bg-gray-900/30 border border-gray-800/20 rounded-sm';
+                cells[i].className = 'grid-cell bg-gray-900/40 border border-gray-800/20 rounded-sm';
             }
 
             boardState.forEach((row, y) => {
@@ -687,27 +691,25 @@
                 });
             });
 
-            // 1. 착지 가이드 그림자(Ghost) 블록 미리 그리기
-            if (player && player.matrix) {
+            if (player && player.matrix && gameStarted && !isGameOver && !isPaused) {
                 const ghostPos = getGhostPosition();
-                player.matrix.forEach((row, y) => {
-                    row.forEach((value, x) => {
-                        if (value !== 0) {
-                            const targetY = y + ghostPos.y;
-                            const targetX = x + ghostPos.x;
-                            if (targetY >= 0 && targetY < ROWS && targetX >= 0 && targetX < COLS) {
-                                const cellIndex = targetY * COLS + targetX;
-                                if (cells[cellIndex]) {
-                                    cells[cellIndex].className = 'grid-cell block-ghost rounded-sm';
+                if (ghostPos) {
+                    player.matrix.forEach((row, y) => {
+                        row.forEach((value, x) => {
+                            if (value !== 0) {
+                                const targetY = y + ghostPos.y;
+                                const targetX = x + ghostPos.x;
+                                if (targetY >= 0 && targetY < ROWS && targetX >= 0 && targetX < COLS) {
+                                    const cellIndex = targetY * COLS + targetX;
+                                    if (cells[cellIndex] && boardState[targetY][targetX] === 0) {
+                                        cells[cellIndex].className = `grid-cell block-ghost rounded-sm`;
+                                    }
                                 }
                             }
-                        }
+                        });
                     });
-                });
-            }
+                }
 
-            // 2. 현재 조작 중인 실제 블록 그리기
-            if (player && player.matrix) {
                 player.matrix.forEach((row, y) => {
                     row.forEach((value, x) => {
                         if (value !== 0) {
@@ -726,10 +728,7 @@
         }
 
         function drawNext() {
-            previewCells.forEach(cell => {
-                cell.className = 'grid-cell bg-transparent';
-            });
-
+            previewCells.forEach(cell => cell.className = 'grid-cell bg-transparent');
             if (!nextMatrix) return;
 
             const size = nextMatrix.length;
@@ -780,11 +779,8 @@
                     [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
                 }
             }
-            if (dir > 0) {
-                matrix.forEach(row => row.reverse());
-            } else {
-                matrix.reverse();
-            }
+            if (dir > 0) matrix.forEach(row => row.reverse());
+            else matrix.reverse();
         }
 
         function playerDrop() {
@@ -792,13 +788,9 @@
             if (collide(boardState, player)) {
                 player.pos.y--;
                 merge(boardState, player);
-                const isLevelUp = arenaSweep();
-                
-                // 레벨업 중이 아닐 때만 블록을 리셋(새로운 블록 생성)
-                if (!isLevelUp) {
-                    playerReset();
-                    updateUI();
-                }
+                playerReset();
+                arenaSweep();
+                updateUI();
                 soundEffects.drop();
             }
             dropCounter = 0;
@@ -810,26 +802,20 @@
             }
             player.pos.y--;
             merge(boardState, player);
-            const isLevelUp = arenaSweep();
-            
-            // 레벨업 중이 아닐 때만 블록을 리셋
-            if (!isLevelUp) {
-                playerReset();
-                updateUI();
-            }
+            playerReset();
+            arenaSweep();
+            updateUI();
             soundEffects.drop();
             dropCounter = 0;
         }
 
         function arenaSweep() {
             let rowCount = 1;
-            let linesCleared = 0;
-            
+            let clearedInThisTurn = 0;
+
             outer: for (let y = boardState.length - 1; y > 0; --y) {
                 for (let x = 0; x < boardState[y].length; ++x) {
-                    if (boardState[y][x] === 0) {
-                        continue outer;
-                    }
+                    if (boardState[y][x] === 0) continue outer;
                 }
 
                 const row = boardState.splice(y, 1)[0].fill(0);
@@ -838,112 +824,80 @@
 
                 score += rowCount * 100;
                 rowCount *= 2;
-                linesCleared++;
                 lines++;
-            }
-            
-            if (linesCleared > 0) {
+                clearedInThisTurn++;
+
                 soundEffects.clear();
             }
 
-            const nextLvl = Math.floor(lines / 10) + 1;
-            if (nextLvl > level) {
-                level = nextLvl;
+            // 10줄 단위 레벨 업 및 보드 완전 초기화
+            const newLevel = Math.floor(lines / 10) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                // 기존 레벨당 120ms 차감 -> 40ms 차감으로 완만하게 조정
+                dropInterval = Math.max(150, 1000 - (level - 1) * 40);
                 
-                // 난이도 상승 폭을 더 키움 (기존 100 -> 120 차감)
-                dropInterval = Math.max(80, 1000 - (level - 1) * 120);
+                // 보드 모든 블록 삭제
+                boardState = createMatrix(COLS, ROWS);
                 
-                triggerLevelUp(level);
-                return true; // 레벨업 발생
+                triggerLevelUpAnimation(level);
             }
-            
-            return false; // 레벨업 없음
         }
 
-        function triggerLevelUp(lvl) {
-            isPaused = true; // 연출 중 게임 일시정지 (내부 로직용)
+        // --- 7. 레벨업 4종 애니메이션 연출 ---
+        function triggerLevelUpAnimation(lvl) {
             soundEffects.levelUp();
-            
             const lvlOverlay = document.getElementById('level-up-overlay');
-            const lvlText = document.getElementById('level-up-text');
-            const confettiContainer = document.getElementById('confetti-container');
-            const animationContainer = document.getElementById('animation-container');
-            
-            if (!lvlOverlay || !lvlText || !confettiContainer || !animationContainer) return;
+            const lvlMsg = document.getElementById('level-up-msg');
+            const container = document.getElementById('lvl-anim-container');
 
-            lvlText.textContent = `LEVEL ${lvl}`;
-            
-            // 1. 공통 파티클(폭죽) 생성
-            confettiContainer.innerHTML = '';
-            const colors = ['#f0f000', '#00f0f0', '#f000f0', '#00f000', '#f0a000', '#a000f0', '#ff0055'];
-            for (let i = 0; i < 40; i++) {
-                const p = document.createElement('div');
-                p.className = 'confetti-particle';
-                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                p.style.left = `${Math.random() * 100}%`;
-                p.style.bottom = `${Math.random() * 30 + 30}%`;
-                p.style.animationDelay = `${Math.random() * 0.2}s`;
-                confettiContainer.appendChild(p);
-            }
+            lvlMsg.textContent = `LEVEL ${lvl} REACHED!`;
+            container.innerHTML = '';
 
-            // 2. 레벨별 다이나믹 애니메이션 교체 (4가지 패턴 루프)
-            const animType = lvl % 4;
-            animationContainer.innerHTML = ''; // 기존 애니메이션 초기화
+            const animType = lvl % 4; // 4가지 연출 번갈아 출력
 
-            if (animType === 2) {
-                // 패턴 A: 만세 캐릭터 3인방
-                animationContainer.innerHTML = `
-                    <div class="flex items-end justify-center gap-2">
-                        <div class="cheering-person"><svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#ff0055"/><circle cx="20" cy="13" r="7" fill="#ffdbac"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#ec4899"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#3b82f6"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#3b82f6"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffdbac" transform="rotate(30 26 22)"/></g></svg></div>
-                        <div class="cheering-person"><svg class="w-9 h-13 md:w-11 md:h-15 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#facc15"/><circle cx="20" cy="13" r="7" fill="#f1c27d"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#06b6d4"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#1e1b4b"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#f1c27d" transform="rotate(30 26 22)"/></g></svg></div>
-                        <div class="cheering-person"><svg class="w-8 h-12 md:w-10 md:h-14 drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]" viewBox="0 0 40 60"><polygon points="20,0 14,8 26,8" fill="#22c55e"/><circle cx="20" cy="13" r="7" fill="#ffd1a4"/><circle cx="18" cy="12" r="1" fill="#1e293b"/><circle cx="22" cy="12" r="1" fill="#1e293b"/><path d="M 17 15 Q 20 18 23 15" stroke="#1e293b" stroke-width="1.2" fill="none"/><rect x="14" y="21" width="12" height="17" rx="3" fill="#a855f7"/><rect x="15" y="38" width="4" height="16" rx="1" fill="#475569"/><rect x="21" y="38" width="4" height="16" rx="1" fill="#475569"/><g class="arm-left"><rect x="6" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(-30 14 22)"/></g><g class="arm-right"><rect x="30" y="8" width="4" height="15" rx="2" fill="#ffd1a4" transform="rotate(30 26 22)"/></g></svg></div>
-                    </div>
-                `;
-            } else if (animType === 3) {
-                // 패턴 B: 별(Star) 폭발 회전
-                for(let j=0; j<6; j++) {
-                    const angle = (j * 60) * (Math.PI / 180);
-                    const tx = Math.cos(angle) * 50;
-                    const ty = Math.sin(angle) * 50;
-                    animationContainer.innerHTML += `
-                        <div class="star-burst" style="transform-origin: ${-tx}px ${-ty}px; margin-left: ${tx}px; margin-top: ${ty}px; animation-delay: ${j*0.1}s">
-                            <i class="fa-solid fa-star text-yellow-400 text-3xl drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"></i>
+            if (animType === 0) { // 만세 캐릭터 3인방
+                container.innerHTML = `
+                    <div class="flex gap-3 items-end">
+                        <div class="animate-hurrah-1 flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center text-[10px]">😆</div>
+                            <div class="w-4 h-6 bg-pink-600 rounded-t-md relative flex justify-between">
+                                <div class="w-1.5 h-4 bg-pink-400 animate-arm-left rounded-full"></div>
+                                <div class="w-1.5 h-4 bg-pink-400 animate-arm-right rounded-full"></div>
+                            </div>
                         </div>
-                    `;
-                }
-            } else if (animType === 0) {
-                // 패턴 C: 로켓 발사
-                animationContainer.innerHTML = `
-                    <div class="rocket-ship">
-                        <svg width="60" height="90" viewBox="0 0 100 150" class="drop-shadow-[0_0_12px_rgba(6,182,212,0.8)]">
-                            <!-- 로켓 본체 -->
-                            <path d="M 50 10 C 20 50 20 100 20 100 L 80 100 C 80 100 80 50 50 10 Z" fill="#e2e8f0" />
-                            <!-- 창문 -->
-                            <circle cx="50" cy="60" r="12" fill="#1e293b" />
-                            <circle cx="50" cy="60" r="9" fill="#38bdf8" />
-                            <!-- 날개 -->
-                            <polygon points="20,80 0,110 20,100" fill="#ef4444" />
-                            <polygon points="80,80 100,110 80,100" fill="#ef4444" />
-                            <!-- 불꽃 -->
-                            <polygon class="rocket-fire" points="30,100 50,140 70,100 60,110 40,110" fill="#f97316" />
-                        </svg>
+                        <div class="animate-hurrah-2 flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs">🥳</div>
+                            <div class="w-5 h-8 bg-yellow-500 rounded-t-md relative flex justify-between">
+                                <div class="w-2 h-5 bg-yellow-300 animate-arm-left rounded-full"></div>
+                                <div class="w-2 h-5 bg-yellow-300 animate-arm-right rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="animate-hurrah-3 flex flex-col items-center">
+                            <div class="w-6 h-6 rounded-full bg-cyan-400 border-2 border-white flex items-center justify-center text-[10px]">😃</div>
+                            <div class="w-4 h-6 bg-cyan-500 rounded-t-md relative flex justify-between">
+                                <div class="w-1.5 h-4 bg-cyan-300 animate-arm-left rounded-full"></div>
+                                <div class="w-1.5 h-4 bg-cyan-300 animate-arm-right rounded-full"></div>
+                            </div>
+                        </div>
                     </div>
                 `;
-            } else {
-                // 패턴 D: 대형 황금 왕관 드롭
-                animationContainer.innerHTML = `
-                    <div class="crown-item">
-                        <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-[0_0_15px_rgba(250,204,21,1)]">
-                            <!-- 왕관 바탕 -->
-                            <path d="M 10 30 L 30 50 L 50 20 L 70 50 L 90 30 L 85 80 L 15 80 Z" fill="#eab308" stroke="#ca8a04" stroke-width="2"/>
-                            <!-- 보석 장식 -->
-                            <circle class="crown-gem" cx="10" cy="30" r="6" fill="#ef4444" />
-                            <circle class="crown-gem" cx="50" cy="20" r="8" fill="#3b82f6" />
-                            <circle class="crown-gem" cx="90" cy="30" r="6" fill="#ef4444" />
-                            <circle class="crown-gem" cx="30" cy="70" r="4" fill="#22c55e" />
-                            <circle class="crown-gem" cx="70" cy="70" r="4" fill="#22c55e" />
-                            <circle class="crown-gem" cx="50" cy="70" r="5" fill="#a855f7" />
-                        </svg>
+            } else if (animType === 1) { // 별 폭발
+                container.innerHTML = `
+                    <div class="text-5xl text-yellow-400 animate-star-burst drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                `;
+            } else if (animType === 2) { // 로켓 발사
+                container.innerHTML = `
+                    <div class="text-5xl text-pink-500 animate-rocket-launch drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]">
+                        <i class="fa-solid fa-rocket"></i>
+                    </div>
+                `;
+            } else { // 왕관 드롭
+                container.innerHTML = `
+                    <div class="text-5xl text-yellow-300 animate-crown-drop drop-shadow-[0_0_20px_rgba(253,224,71,0.9)]">
+                        <i class="fa-solid fa-crown"></i>
                     </div>
                 `;
             }
@@ -952,30 +906,19 @@
 
             setTimeout(() => {
                 lvlOverlay.classList.add('hidden');
-                
-                // 3. 쌓인 블록 초기화 (보드 클리어)
-                boardState = createMatrix(COLS, ROWS);
-                
-                // 4. 새로운 블록 생성 후 게임 재개
-                playerReset();
-                updateUI();
-                isPaused = false;
-                
-            }, 2000); // 연출 시간을 조금 넉넉히 2초로 줌
+            }, 1800);
         }
 
+        // --- 8. 메인 게임 루프 ---
         function update(time = 0) {
-            // isPaused가 내부적으로 true면 (레벨업 연출 등) 화면 갱신은 하되 낙하는 멈춤
-            if (isGameOver || !gameStarted) return;
+            if (isGameOver || isPaused || !gameStarted) return;
 
             const deltaTime = time - lastTime;
             lastTime = time;
 
-            if (!isPaused) {
-                dropCounter += deltaTime;
-                if (dropCounter > dropInterval) {
-                    playerDrop();
-                }
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                playerDrop();
             }
 
             draw();
@@ -992,32 +935,22 @@
             isGameOver = true;
             stopBGM();
             soundEffects.gameOver();
+            saveHighScore(score, level);
+            
             overlayTitleEl.textContent = 'GAME OVER';
             overlayTitleEl.className = "text-2xl md:text-3xl font-black font-retro tracking-widest text-red-500 mb-2";
-            overlayMsgEl.textContent = `최종 점수: ${score}점 (레벨 ${level})`;
+            overlayMsgEl.textContent = `${playerName}님 최종 점수: ${score}점 (LV.${level})`;
             startBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 다시 시작하기';
             overlayEl.style.display = 'flex';
         }
 
-        function togglePause() {
-            if (!gameStarted || isGameOver) return;
-            isPaused = !isPaused;
-            if (isPaused) {
-                stopBGM();
-                overlayTitleEl.textContent = 'PAUSED';
-                overlayTitleEl.className = "text-2xl md:text-3xl font-black font-retro tracking-widest text-cyan-400 mb-2";
-                overlayMsgEl.textContent = '게임을 일시정지했습니다.';
-                startBtn.innerHTML = '<i class="fa-solid fa-play"></i> 계속 진행';
-                overlayEl.style.display = 'flex';
-            } else {
-                overlayEl.style.display = 'none';
-                if (soundEnabled) startBGM();
-                lastTime = performance.now();
-                requestAnimationFrame(update);
-            }
-        }
-
         function startGame() {
+            playerName = playerNameInput.value.trim() || "익명";
+            gamePlayerBadge.textContent = playerName;
+            if (playerNameInput.value.trim()) {
+                localStorage.setItem('hochani_player_name', playerName);
+            }
+
             boardState = createMatrix(COLS, ROWS);
             score = 0;
             lines = 0;
@@ -1035,171 +968,136 @@
 
             playerReset();
             updateUI();
+            startBGM();
             
-            if (soundEnabled) {
-                startBGM();
-            }
-
             lastTime = performance.now();
             dropCounter = 0;
             requestAnimationFrame(update);
         }
 
-        pauseBtn.addEventListener('click', togglePause);
-
+        // --- 9. 이벤트 리스너 연결 ---
         document.addEventListener('keydown', event => {
             if (isGameOver || !gameStarted) return;
 
             if (event.key === 'p' || event.key === 'P' || event.key === 'Escape') {
-                togglePause();
+                isPaused = !isPaused;
+                if (isPaused) {
+                    stopBGM();
+                    overlayTitleEl.textContent = 'PAUSED';
+                    overlayTitleEl.className = "text-2xl md:text-3xl font-black font-retro tracking-widest text-cyan-400 mb-2";
+                    overlayMsgEl.textContent = '게임을 일시정지했습니다.';
+                    startBtn.innerHTML = '<i class="fa-solid fa-play"></i> 계속 진행';
+                    overlayEl.style.display = 'flex';
+                } else {
+                    overlayEl.style.display = 'none';
+                    startBGM();
+                    lastTime = performance.now();
+                    requestAnimationFrame(update);
+                }
                 return;
             }
 
             if (isPaused) return;
 
             switch (event.key) {
-                case 'ArrowLeft':
-                    playerMove(-1);
-                    break;
-                case 'ArrowRight':
-                    playerMove(1);
-                    break;
-                case 'ArrowDown':
-                    playerDrop();
-                    break;
-                case 'ArrowUp':
-                    playerRotate();
-                    break;
-                case ' ':
-                    event.preventDefault();
-                    playerHardDrop();
-                    break;
+                case 'ArrowLeft': playerMove(-1); break;
+                case 'ArrowRight': playerMove(1); break;
+                case 'ArrowDown': playerDrop(); break;
+                case 'ArrowUp': playerRotate(); break;
+                case ' ': event.preventDefault(); playerHardDrop(); break;
             }
             draw();
         });
 
-        // 스마트폰 터치 조작 및 연속 이동
-        function setupTouchButton(buttonId, action) {
-            const btn = document.getElementById(buttonId);
-            let timer = null;
-            let interval = null;
-
-            const handleStart = (e) => {
-                if (e.cancelable) e.preventDefault();
-                if (isGameOver || !gameStarted || isPaused) return;
-                
-                action();
-                draw();
-
-                timer = setTimeout(() => {
-                    interval = setInterval(() => {
-                        action();
-                        draw();
-                    }, 80);
-                }, 180);
-            };
-
-            const handleEnd = (e) => {
-                if (e && e.cancelable) e.preventDefault();
-                clearTimeout(timer);
-                clearInterval(interval);
-            };
-
-            btn.addEventListener('touchstart', handleStart, { passive: false });
-            btn.addEventListener('touchend', handleEnd, { passive: false });
-            btn.addEventListener('touchcancel', handleEnd, { passive: false });
-            
-            btn.addEventListener('mousedown', handleStart);
-            btn.addEventListener('mouseup', handleEnd);
-            btn.addEventListener('mouseleave', handleEnd);
-        }
-
-        setupTouchButton('ctrl-left', () => playerMove(-1));
-        setupTouchButton('ctrl-right', () => playerMove(1));
-        setupTouchButton('ctrl-down', () => playerDrop());
-
-        const rotateBtn = document.getElementById('ctrl-rotate');
-        const dropBtn = document.getElementById('ctrl-drop');
-
-        rotateBtn.addEventListener('touchstart', (e) => {
-            if (e.cancelable) e.preventDefault();
-            if (!isGameOver && gameStarted && !isPaused) { playerRotate(); draw(); }
-        }, { passive: false });
-        rotateBtn.addEventListener('click', () => {
-            if (!isGameOver && gameStarted && !isPaused) { playerRotate(); draw(); }
-        });
-
-        dropBtn.addEventListener('touchstart', (e) => {
-            if (e.cancelable) e.preventDefault();
-            if (!isGameOver && gameStarted && !isPaused) { playerHardDrop(); draw(); }
-        }, { passive: false });
-        dropBtn.addEventListener('click', () => {
-            if (!isGameOver && gameStarted && !isPaused) { playerHardDrop(); draw(); }
-        });
-
-        // 게임 보드 직관적 터치/드래그 및 탭 조작 (좌우 이동 및 실시간 회전)
-        const boardContainer = document.querySelector('.board-container');
+        // 보드 터치 드래그 및 탭 회전 이벤트
         let touchStartX = 0;
         let touchStartY = 0;
-        let isSwiping = false;
 
-        if (boardContainer) {
-            boardContainer.addEventListener('touchstart', (e) => {
-                if (isGameOver || !gameStarted || isPaused) return;
-                const touch = e.touches[0];
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                isSwiping = false;
-            }, { passive: true });
+        boardEl.addEventListener('touchstart', e => {
+            if (!gameStarted || isPaused || isGameOver) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
 
-            boardContainer.addEventListener('touchmove', (e) => {
-                if (isGameOver || !gameStarted || isPaused) return;
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - touchStartX;
-                const deltaY = touch.clientY - touchStartY;
+        boardEl.addEventListener('touchmove', e => {
+            if (!gameStarted || isPaused || isGameOver) return;
+            const diffX = e.touches[0].clientX - touchStartX;
+            if (Math.abs(diffX) > 28) {
+                playerMove(diffX > 0 ? 1 : -1);
+                touchStartX = e.touches[0].clientX;
+                draw();
+            }
+        }, { passive: true });
 
-                // 좌우 드래그로 도형 위치 이동
-                if (Math.abs(deltaX) > 22 && Math.abs(deltaX) > Math.abs(deltaY)) {
-                    isSwiping = true;
-                    if (deltaX > 0) {
-                        playerMove(1);
-                    } else {
-                        playerMove(-1);
-                    }
-                    touchStartX = touch.clientX;
-                    draw();
-                } else if (deltaY > 35 && Math.abs(deltaY) > Math.abs(deltaX)) {
-                    // 아래 드래그로 빠른 하강
-                    isSwiping = true;
-                    playerDrop();
-                    touchStartY = touch.clientY;
-                    draw();
-                }
-            }, { passive: true });
+        boardEl.addEventListener('touchend', e => {
+            if (!gameStarted || isPaused || isGameOver) return;
+            const diffX = Math.abs(e.changedTouches[0].clientX - touchStartX);
+            const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY);
+            if (diffX < 10 && diffY < 10) { // 탭한 경우 회전
+                playerRotate();
+                draw();
+            }
+        });
 
-            boardContainer.addEventListener('touchend', (e) => {
-                if (isGameOver || !gameStarted || isPaused) return;
-                // 보드를 슬라이드하다가 탭(Tap)하면 이동 흐름 끊김 없이 즉시 회전
-                if (!isSwiping) {
-                    playerRotate();
-                    draw();
-                }
-            }, { passive: true });
-        }
+        // 모바일 버튼 컨트롤러
+        document.getElementById('ctrl-left').addEventListener('click', () => { if (gameStarted && !isPaused && !isGameOver) { playerMove(-1); draw(); } });
+        document.getElementById('ctrl-right').addEventListener('click', () => { if (gameStarted && !isPaused && !isGameOver) { playerMove(1); draw(); } });
+        document.getElementById('ctrl-down').addEventListener('click', () => { if (gameStarted && !isPaused && !isGameOver) { playerDrop(); draw(); } });
+        document.getElementById('ctrl-rotate').addEventListener('click', () => { if (gameStarted && !isPaused && !isGameOver) { playerRotate(); draw(); } });
+        document.getElementById('ctrl-drop').addEventListener('click', () => { if (gameStarted && !isPaused && !isGameOver) { playerHardDrop(); draw(); } });
 
-        // 사운드/BGM 토글 버튼
-        soundToggleBtn.addEventListener('click', () => {
+        // 네비게이션 버튼들
+        document.getElementById('btn-start-game').addEventListener('click', () => { showScreen('game'); startGame(); });
+        document.getElementById('btn-show-how').addEventListener('click', () => showScreen('how'));
+        document.getElementById('btn-show-rank').addEventListener('click', () => showScreen('rank'));
+        document.getElementById('btn-how-back').addEventListener('click', () => showScreen('menu'));
+        document.getElementById('btn-rank-back').addEventListener('click', () => showScreen('menu'));
+
+        document.getElementById('btn-game-home').addEventListener('click', () => {
+            isPaused = true;
+            stopBGM();
+            showScreen('menu');
+        });
+
+        document.getElementById('overlay-menu-btn').addEventListener('click', () => showScreen('menu'));
+
+        document.getElementById('btn-reset-rank').addEventListener('click', () => {
+            localStorage.removeItem('hochani_tetris_scores_v2');
+            updateRankListUI();
+            updateBestScoreMenuUI();
+        });
+
+        // 사운드 토글
+        document.getElementById('sound-toggle').addEventListener('click', () => {
             soundEnabled = !soundEnabled;
+            const soundIcon = document.getElementById('sound-icon');
+            const soundText = document.getElementById('sound-text');
             if (soundEnabled) {
-                soundIconEl.className = "fa-solid fa-volume-high text-cyan-400";
-                soundTextEl.textContent = "BGM ON";
-                if (gameStarted && !isPaused && !isGameOver) {
-                    startBGM();
-                }
+                soundIcon.className = "fa-solid fa-volume-high text-cyan-400 text-xs";
+                soundText.textContent = "BGM ON";
+                startBGM();
             } else {
-                soundIconEl.className = "fa-solid fa-volume-xmark text-gray-500";
-                soundTextEl.textContent = "MUTE";
+                soundIcon.className = "fa-solid fa-volume-xmark text-gray-500 text-xs";
+                soundText.textContent = "BGM OFF";
                 stopBGM();
+            }
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if (!gameStarted || isGameOver) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                stopBGM();
+                overlayTitleEl.textContent = 'PAUSED';
+                overlayTitleEl.className = "text-2xl md:text-3xl font-black font-retro tracking-widest text-cyan-400 mb-2";
+                overlayMsgEl.textContent = '게임을 일시정지했습니다.';
+                startBtn.innerHTML = '<i class="fa-solid fa-play"></i> 계속 진행';
+                overlayEl.style.display = 'flex';
+            } else {
+                overlayEl.style.display = 'none';
+                startBGM();
+                lastTime = performance.now();
+                requestAnimationFrame(update);
             }
         });
 
@@ -1207,7 +1105,7 @@
             if (isPaused) {
                 isPaused = false;
                 overlayEl.style.display = 'none';
-                if (soundEnabled) startBGM();
+                startBGM();
                 lastTime = performance.now();
                 requestAnimationFrame(update);
             } else {
@@ -1215,51 +1113,16 @@
             }
         });
 
-        // --- 방문자 수 카운터 (Total & Today) ---
-        async function initVisitorCounter() {
-            const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            const namespace = 'hochani-tetris-dlghcks7737';
-            
-            // 동일 세션 반복 새로고침 시 카운터 중복 증가 방지
-            const hasVisitedToday = sessionStorage.getItem('visited_' + todayStr);
-            const action = hasVisitedToday ? '' : '/up';
-            
-            try {
-                // 1. 총 방문자 수 조회/증가
-                const totalRes = await fetch(`https://api.counterapi.dev/v1/${namespace}/total${action}`);
-                if (totalRes.ok) {
-                    const totalData = await totalRes.json();
-                    document.getElementById('total-visits').textContent = (totalData.count || 1).toLocaleString();
-                }
-
-                // 2. 오늘 방문자 수 조회/증가
-                const todayRes = await fetch(`https://api.counterapi.dev/v1/${namespace}/today_${todayStr}${action}`);
-                if (todayRes.ok) {
-                    const todayData = await todayRes.json();
-                    document.getElementById('today-visits').textContent = (todayData.count || 1).toLocaleString();
-                }
-
-                sessionStorage.setItem('visited_' + todayStr, 'true');
-            } catch (e) {
-                console.log("Visitor counter status:", e);
-                document.getElementById('today-visits').textContent = '1';
-                document.getElementById('total-visits').textContent = '1';
-            }
-        }
-
-        // 모바일 브라우저 주소창 고려한 동적 높이 보정 함수 (--vh)
-        function updateCustomVh() {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        }
-        window.addEventListener('resize', updateCustomVh);
-        window.addEventListener('orientationchange', updateCustomVh);
-
         window.onload = function() {
             updateCustomVh();
             boardState = createMatrix(COLS, ROWS);
             draw();
-            initVisitorCounter();
+
+            // 저장된 이름 불러오기
+            const savedName = localStorage.getItem('hochani_player_name');
+            if (savedName) playerNameInput.value = savedName;
+
+            showScreen('menu');
         };
     </script>
 </body>
